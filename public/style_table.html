@@ -1,0 +1,182 @@
+<!-- 
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2022 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+-->
+
+<html>
+<head>
+	<link rel="stylesheet" href="controls_style.css">
+	<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+	<script src="table_style.js"></script>
+	<script> window.onload = start; </script>
+</head>
+<body>
+	<div id="main">
+		<div style="float:left"> <h3> Table On Mobile Preview </h3>
+			<div id="table_div" style="border-style:solid;height:5.78in;width:2.8in;overflow-y:scroll;overflow-x:scroll">
+				<iframe id="table_viewer" style="width:100%;height:100%;border:0">
+				</iframe>
+			</div>
+		</div>
+
+		<div style="float:left;margin-left:10px"> <h3> Style Controls </h3>
+		<div id="controls" style="border-style:solid;padding:6px;overflow:hidden">
+		<div id="controls_left" style="float:left">
+			<div class="control_section" id="col_head_div" style="border-bottom: 1px solid gray;"> <span class="control_section_head"> Col Header Style </span> <br>
+				<label for="col_head_bold"> Bold: </label> 
+					<input id="col_head_bold" type="checkbox" name="col_head_bold" onchange="on_change()"> 
+				<label for="col_head_italic"> Italic: </label> 
+					<input id="col_head_italic" type="checkbox" name="col_head_italic" onchange="on_change()">
+				<label for="col_head_under"> Underline: </label> 
+					<input id="col_head_under" type="checkbox" name="col_head_under" onchange="on_change()"> <br>
+				<label for="col_head_back"> Background: </label> 
+					<input id="col_head_back" type="checkbox" name="col_head_back" onchange="on_change()"> <br>
+				<label for="col_head_frozen"> Freeze (for scrolling): </label> 
+					<input id="col_head_frozen" type="checkbox" name="col_head_frozen" onchange="on_change()"> <br>
+				<label for="col_head_size"> Font Size (3-10vw): </label> 
+					<input id="col_head_size" type="number" name="col_head_size" onchange="on_change()" value="6" min="3" max="10" step="0.25"> <br>
+				<label for="col_head_font"> Font Face Style: </label> 
+					<select id="col_head_font" name="col_head_font" onchange="on_change()">
+						<option value="Georgia" selected="selected">Serif</option>
+						<option value="Arial">San Serif</option>
+						<option value="Courier New">Mono</option>
+					</select> <br>
+				<label for="col_head_horz_align"> Horz Alignment: </label> 
+					<select id="col_head_horz_align" name="col_head_horz_align" onchange="on_change()">
+						<option value="left">left</option>
+						<option value="center" selected="selected">center</option>
+						<option value="right">right</option>
+						<option value="justify">justify</option>
+					</select> <br>
+				<label for="col_head_vert_align"> Vert Alignment: </label> 
+					<select id="col_head_vert_align" name="col_head_vert_align" onchange="on_change()">
+						<option value="top">top</option>
+						<option value="middle" selected="selected">middle</option>
+						<option value="bottom">bottom</option>
+					</select> <br>
+			</div>
+
+			<div class="control_section" id="row_head_div"> <span class="control_section_head"> Row Header Style </span> <br>
+				<label for="row_head_bold"> Bold: </label> 
+					<input id="row_head_bold" type="checkbox" name="row_head_bold" onchange="on_change()"> 
+				<label for="row_head_italic"> Italic: </label> 
+					<input id="row_head_italic" type="checkbox" name="row_head_italic" onchange="on_change()">
+				<label for="row_head_under"> Underline: </label> 
+					<input id="row_head_under" type="checkbox" name="row_head_under" onchange="on_change()"> <br>
+				<label for="row_head_back"> Background: </label> 
+					<input id="row_head_back" type="checkbox" name="row_head_back" onchange="on_change()"> <br>
+				<label for="row_head_frozen"> Freeze (for scrolling): </label> 
+					<input id="row_head_frozen" type="checkbox" name="row_head_frozen" onchange="on_change()"> <br>
+				<label for="row_head_size"> Font Size (3-10vw): </label> 
+					<input id="row_head_size" type="number" name="row_head_size" onchange="on_change()" value="6" min="3" max="10" step="0.25"> <br>
+				<label for="row_head_font"> Font Face Style: </label> 
+					<select id="row_head_font" name="row_head_font" onchange="on_change()">
+						<option value="Georgia" selected="selected">Serif</option>
+						<option value="Arial">San Serif</option>
+						<option value="Courier New">Mono</option>
+					</select> <br>
+				<label for="row_head_horz_align"> Horz Alignment: </label> 
+					<select id="row_head_horz_align" name="row_head_horz_align" onchange="on_change()">
+						<option value="left" selected="selected">left</option>
+						<option value="center">center</option>
+						<option value="right">right</option>
+						<option value="justify">justify</option>
+					</select> <br>
+				<label for="row_head_vert_align"> Vert Alignment: </label> 
+					<select id="row_head_vert_align" name="row_head_vert_align" onchange="on_change()">
+						<option value="top">top</option>
+						<option value="middle" selected="selected">middle</option>
+						<option value="bottom">bottom</option>
+					</select> <br>
+			</div>
+		</div>
+
+		<div id="controls_right" style="float:left;padding-left:20px">
+			<div class="control_section" style="border-bottom: 1px solid gray;"> <span class="control_section_head"> Body Style </span> <br>
+				<label for="body_size"> Font Size (3-10vw): </label> 
+					<input id="body_size" type="number" name="body_size" onchange="on_change()" value="5.25" min="3" max="10" step="0.25"> <br>
+				<label for="body_font"> Font Face Style: </label> 
+					<select id="body_font" name="body_font" onchange="on_change()">
+						<option value="Georgia" selected="selected">Serif</option>
+						<option value="Arial">San Serif</option>
+						<option value="Courier New">Mono</option>
+					</select> <br>
+				<label for="body_horz_align"> Horz Alignment: </label> 
+					<select id="body_horz_align" name="body_horz_align" onchange="on_change()">
+						<option value="left">left</option>
+						<option value="center" selected="selected">center</option>
+						<option value="right">right</option>
+						<option value="justify">justify</option>
+					</select> <br>
+				<label for="body_vert_align"> Vert Alignment: </label> 
+					<select id="body_vert_align" name="body_horz_align" onchange="on_change()">
+						<option value="top">top</option>
+						<option value="middle" selected="selected">middle</option>
+						<option value="bottom">bottom</option>
+					</select> <br>
+			</div>
+
+			<div class="control_section" style="border-bottom: 1px solid gray;"> <span class="control_section_head"> Spacing and Borders </span> <br>
+				<label for="row_stripe"> Row Striping: </label> 
+					<input id="row_stripe" type="checkbox" name="row_stripe" onchange="on_change()"> <br>
+				<label for="row_border"> Row Border: </label> 
+					<input id="row_border" type="checkbox" name="row_border" onchange="on_change()"> <br>
+				<label for="row_space"> Row Spacing (0-10vw): </label> 
+					<input id="row_space" type="number" name="row_space" onchange="on_change()" value="0" min="0" max="10" step="0.25"> <br>
+				<label for="min_row_height"> Minimum Row Height (0-40vw): </label> 
+					<input id="min_row_height" type="number" name="min_row_height" onchange="on_change()" value="0" max="40" step="0.25"> <br>
+				<label for="col_border"> Col Border: </label> 
+					<input id="col_border" type="checkbox" name="col_border" onchange="on_change()"> <br>
+				<label for="col_space"> Col Spacing (0-10vw): </label> 
+					<input id="col_space" type="number" name="col_space" onchange="on_change()" value="0" min="0" max="10" step="0.25"> <br>
+				<label for="min_col_width"> Minimum Col Width (0-40vw): </label> 
+					<input id="min_col_width" type="number" name="min_col_width" onchange="on_change()" value="0" max="40" step="0.25"> <br>
+			</div>
+
+			<div class="control_section" style="border-bottom: 1px solid gray;"> <span class="control_section_head"> Reset Styles </span> <br>
+				<span id="warning">Warning Cannot Undo:</span><input id="reset" type="button" name="reset" onclick="start()" value="Reset Styles"> <br>
+			</div>
+
+			<div class="control_section"> <span class="control_section_head"> Non-Style Info </span> <br>
+				<label for="table_id"> Table Id: </label> 
+					<input id="table_id" type="text" name="table_id" disabled=true> <br>
+				<label for="worker_id"> User Testing Id: </label> 
+					<input id="worker_id" type="text" name="worker_id"> <br>
+				<input id="preview" type="button" name="preview" onclick="view_preview()" value="Preview in Browser" style="margin-bottom:5px"> <br>
+				<input id="submit" type="button" name="submit" onclick="on_submit()" value="Submit"> <span id="response"></span><br>
+			</div>
+		</div>
+		</div>
+		</div>
+		<div style="float:left;margin-left:10px"> <h3> Scan QR Code to Preview on Phone </h3>
+			<div id="qr_code"></div>
+			<div style="width:310px"> <h3> Instructions </h3> 
+				<ul>
+					<li>Use Style Controls to format the table to be as easily readable as possible on a mobile phone screen.</li>
+					<li>Set the browser to 100% zoom.  The Table On Mobile Preview area should be approximately the size of an iPhone 12.</li>
+					<li>Table On Mobile Preview area always stays the same size.  If the table does not fit, the area will be scrollable. </li>
+					<li>To preview the table on your own mobile device, scan the QR code. </li>
+					<li>To preview the table in another browser tab or window, click the Preview button. </li>
+					<li>When done, add your User Id (no spaces) and click Submit. </li>
+				</ul>
+			</div>
+		</div>
+
+	</div>
+
+</body>
+</html>

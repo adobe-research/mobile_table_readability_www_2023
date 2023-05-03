@@ -1,0 +1,263 @@
+
+{
+	"version": "v2",
+	"test_styles": ["designs/spacing2.json", "designs/spacing5.json", "designs/spacing10.json", "designs/spacing15.json"],
+	"time_limit": 120,
+	"skip_text": "Skip",
+	"practice_tasks": [
+		{
+			"context": "Finanical information",
+			"question": "How many years have a revenue of $700 or more?",
+			"answer_choices": ["0", "1", "2", "3"],
+			"answer": "2",
+			"table_idx": 1,
+			"style_file": "designs/spacing5.json",
+			"task_id": "practice1"
+		},
+		{
+			"context": "Quarterly finanical information.",
+			"question": "Which Quarter had the highest Costs?",
+			"answer_choices": ["Q1", "Q2", "Q3", "Q4"],
+			"answer": "Q1",
+			"table_idx": 15,
+			"style_file": "designs/spacing10.json",
+			"task_id": "practice2"
+		}
+	],
+	"tasks": [
+		[
+			{
+				"context": "Employee income.",
+				"question": "Which employee group has the highest % of poor households?",
+				"answer_choices": ["Less than two years", "Two to less than five years", "Five years or more", "Other"],
+				"answer": "Less than two years",
+				"table_idx": 2,
+				"task_id": "task0"
+			},
+			{
+				"context": "Employee income",
+				"question": "For employees employed over 4 years, what % have low yearly raises?",
+				"answer_choices": ["15.7", "70.8", "95.9", "100"],
+				"answer": "95.9",
+				"table_idx": 16,
+				"task_id": "task1"
+			}
+		],
+		[
+			{
+				"context": "Economic growth of regions over a year.",
+				"question": "For the North West Central region, which 2 consecutive years had the most similar economic growth? ",
+				"answer_choices": ["2002-2003", "2005-2006", "2008-2009", "2013-2014"],
+				"answer": "2005-2006",
+				"table_idx": 3,
+				"task_id": "task2"
+			},
+			{
+				"context": "Economic growth of regions over a year.",
+				"question": "During which month did the New England region experience the highest growth?",
+				"answer_choices": ["January", "April", "October", "November"],
+				"answer": "October",
+				"table_idx": 17,
+				"task_id": "task3"
+			}
+		],
+		[
+			{
+				"context": "Train schedule showing stops and pickup times.",
+				"question": "What is the train number for the last train that gets you from California Avenue to San Mateo?",
+				"answer_choices": ["101", "105", "301", "505"],
+				"answer": "105",
+				"table_idx": 4,
+				"task_id": "task4"
+			},
+			{
+				"context": "Train schedule showing stops and pickup times.",
+				"question": "When does train 202 stop at ORNDA?",
+				"answer_choices": ["6:22am", "6:37am", "6:42am", "6:57am"],
+				"answer": "6:37am",
+				"table_idx": 18,
+				"task_id": "task5"
+			}
+		],
+		[
+			{
+				"context": "Student debt for higher education.",
+				"question": "Which undergraduate major had the least borrowed between $15,000 and $29,999?",
+				"answer_choices": ["Business and management", "Engineering, mathematics", "Humanities or social sciences", "Other"],
+				"answer": "Engineering, mathematics",
+				"table_idx": 5,
+				"task_id": "task6"
+			},
+			{
+				"context": "Statistics on disabilities and employment by age group.",
+				"question": "How many people aged 21 to 64 were employed with a severe disability in 2010?",
+				"answer_choices": ["261", "5,570", "9,193", "20,286"],
+				"answer": "5,570",
+				"table_idx": 19,
+				"task_id": "task7"
+			}
+		],
+		[
+			{
+				"context": "iPhones features",
+				"question": "What feature is the same for iPhone 7 & X that is different in iPhone 11?",
+				"answer_choices": ["Auto HDR for photos", "F/2.2 aperture", "Retina Flash", "7MP photos"],
+				"answer": "7MP photos",
+				"table_idx": 6,
+				"task_id": "task8"
+			},
+			{
+				"context": "Android phone features",
+				"question": "Which phone is the thickest?",
+				"answer_choices": ["Google Nexus 6", "LG G3", "Samsung Galaxy Note 4", "iPhone 7"],
+				"answer": "Google Nexus 6",
+				"table_idx": 20,
+				"task_id": "task9"
+			}
+		],
+		[
+			{
+				"context": "iPhones features",
+				"question": "Which portrait lighting effect is unique to the iPhone SE?",
+				"answer_choices": ["Contour", "High-Key Mono", "Stage", "Studio Mono"],
+				"answer": "High-Key Mono",
+				"table_idx": 7,
+				"task_id": "task10"
+			},
+			{
+				"context": "Android phone features",
+				"question": "Which phone can have the most storage, including optional SD cards?",
+				"answer_choices": ["Google Nexus 6", "LG G3", "Samsung Galaxy Note 4", "iPhone 7"],
+				"answer": "Samsung Galaxy Note 4",
+				"table_idx": 21,
+				"task_id": "task11"
+			}
+		],
+		[
+			{
+				"context": "Reese Witherspoon's movie roles.",
+				"question": "What character did Reese Witherspoon play in Best Laid Plans?",
+				"answer_choices": ["Elle Woods", "Kate", "Lissa", "Rosita"],
+				"answer": "Lissa",
+				"table_idx": 8,
+				"task_id": "task12"
+			},
+			{
+				"context": "Nicole Kidman's movie roles.",
+				"question": "In what movie did Kidman play Sarah Ashley?",
+				"answer_choices": ["Australia", "Lord of the Rings", "Moulin Rouge!", "The Invasion"],
+				"answer": "Australia",
+				"table_idx": 22,
+				"task_id": "task13"
+			}
+		],
+		[
+			{
+				"context": "Australian Government acronyms.",
+				"question": "What does NEC stand for?",
+				"answer_choices": ["National Economic Center", "New England Convervatory", "Nippon Electric Company", "Not Elsewhere Classified"],
+				"answer": "Not Elsewhere Classified",
+				"table_idx": 9,
+				"task_id": "task14"
+			},
+			{
+				"context": "USA Government acronyms.",
+				"question": "What is the acroynm for the only trade agreement found in the table?",
+				"answer_choices": ["EFTA", "NAFTA", "QDE", "UFO"],
+				"answer": "NAFTA",
+				"table_idx": 23,
+				"task_id": "task15"
+			}
+		],
+		[
+			{
+				"context": "Season 2 of the T.V. series Grey's Anatomy.",
+				"question": "For the episodes written by Shonda Rhimes, how many different directors total were there?",
+				"answer_choices": ["1", "2", "3", "4"],
+				"answer": "3",
+				"table_idx": 10,
+				"task_id": "task16"
+			},
+			{
+				"context": "Season 11 of the T.V. series Grey's Anatomy.",
+				"question": "What is the name of the episode that had the longest time gap between when it aired and the previous episode aired?",
+				"answer_choices": ["Got to Be Real", "The Great Pretender", "Where Do We Go From Here?", "You're Home"],
+				"answer": "Where Do We Go From Here?",
+				"table_idx": 24,
+				"task_id": "task17"
+			}
+		],
+		[
+			{
+				"context": "Farming term definitions.",
+				"question": "What do you call a large area of land used to farm a single crop?",
+				"answer": "Broadacre",
+				"answer_choices": ["Broadacre", "Crop Field", "Farm", "Food Miles"],
+				"table_idx": 11,
+				"task_id": "task18"
+			},
+			{
+				"context": "Geology term definitions.",
+				"question": "Which metamorphic rock creates fragments with sharp angles when broken?",
+				"answer_choices": ["Calcite", "Limestone", "Pumice", "Quartzite"],
+				"answer": "Quartzite",
+				"table_idx": 25,
+				"task_id": "task19"
+			}
+		],
+		[
+			{
+				"context": "CPAP troubleshooting guide.  A CPAP is a medical device which delivers pressurized air through a tube to a person's mouth or nose to prevent sleep apnea.",
+				"question": "What problem may be caused by a dirty air filter?",
+				"answer_choices": ["No Airflow Occurs", "Airflow Too Hot", "Airflow Pressure Too High or Low", "Ramp Up Feature Does Not Work"],
+				"answer": "Airflow Too Hot",
+				"table_idx": 12,
+				"task_id": "task20"
+			},
+			{
+				"context": "Guide to perform routine home maintenance.",
+				"question": "What tool should you use to remove debris from gutters?",
+				"answer_choices": ["Leaf Blower", "Cleaning Brush", "Trowel", "Pressure Washer"],
+				"answer": "Trowel",
+				"table_idx": 26,
+				"task_id": "task21"
+			}
+		],
+		[
+			{
+				"context": "Industries ranked by revenue percentage.",
+				"question": "Which two years have the same top-5 industries (ignore rank ordering)?",
+				"answer_choices": ["2001 & 2006", "2001 & 2011", "2006 & 2011", "2011 & 2014"],
+				"answer": "2011 & 2014",
+				"table_idx": 13,
+				"task_id": "task22"
+			},
+			{
+				"context": "Top 5 teams for Womens Olympic Beach Volleyball. Teams have 2 athletes.",
+				"question": "Which athlete appears 3 times on a top 4 team?",
+				"answer_choices": ["Jackie Silva", "Kerri Walsh", "Natalie Cook", "Sandra Pires"],
+				"answer": "Natalie Cook",
+				"table_idx": 27,
+				"task_id": "task23"
+			}
+		],
+		[
+			{
+				"context": "Wine menu for a restaurant.",
+				"question": "What year was the cheapest bottle of Italian wine made?",
+				"answer_choices": ["'16", "'17", "'18", "'19"],
+				"answer": "'17",
+				"table_idx": 14,
+				"task_id": "task24"
+			},
+			{
+				"context": "Wine menu for a restaurant.",
+				"question": "Which 2 countries are the chardonnay wines from?",
+				"answer_choices": ["France & South Africa", "France and Italy", "Italy & USA", "Italy & South Africa"],
+				"answer": "France & South Africa",
+				"table_idx": 28,
+				"task_id": "task25"
+			}
+		]
+	]
+}

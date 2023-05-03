@@ -1,0 +1,23 @@
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2022 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+
+#head_size, #body_size, #row_space, #col_space { width: 4em; }
+#min_col_width, #min_row_height { width: 4em; }
+#warning { color: red; font-weight: bold; }
+.control_section {line-height: 25px; padding-bottom: 5px; }
+.control_section_head { font-size: 14pt; color: #666666; line-height: 30px; }
+ul { margin: 20px; padding: 0 }

@@ -1,0 +1,266 @@
+
+{
+	"version": "v1",
+	"test_styles": ["designs/spacing2.json", "designs/spacing5.json", "designs/spacing10.json", "designs/spacing15.json"],
+	"min_separation": 2,
+	"time_limit": 90,
+	"skip_text": "Skip",
+	"bonus_score": 22,
+	"prolific_redirect": "https://app.prolific.co/submissions/complete?cc=86CEB3AB",
+	"practice_tasks": [
+		{
+			"context": "This table shows finanical information for a company.",
+			"question": "How many years have a revenue of $700 or more?",
+			"answer_choices": ["0", "1", "2", "3"],
+			"answer": "2",
+			"table_idx": 1,
+			"style_file": "designs/spacing5.json",
+			"task_id": "practice1"
+		},
+		{
+			"context": "This table shows finanical information for a company for quarterly periods.",
+			"question": "Which Quarter has the highest cost?",
+			"answer_choices": ["Q1", "Q2", "Q3", "Q4"],
+			"answer": "Q1",
+			"table_idx": 15,
+			"style_file": "designs/spacing10.json",
+			"task_id": "practice2"
+		}
+	],
+	"tasks": [
+		[
+			{
+				"context": "This is a statistical table about government employee income.",
+				"question": "Which tenure group has the highest % of poor households?",
+				"answer_choices": ["Less than two years", "Two to less than five years", "Five years or more", "Other"],
+				"answer": "Less than two years",
+				"table_idx": 2,
+				"task_id": "task0"
+			},
+			{
+				"context": "This table shows how much support staff get paid at a company.",
+				"question": "For support staff holding their position for more than 4 years, what % have low yearly raises?",
+				"answer_choices": ["15.7", "70.8", "95.9", "100"],
+				"answer": "95.9",
+				"table_idx": 16,
+				"task_id": "task1"
+			}
+		],
+		[
+			{
+				"context": "The following table shows the economic growth of various regions over a year.",
+				"question": "Which 2 consecutive years had the most similar total amount over the entire year? ",
+				"answer_choices": ["2002-2003", "2008-2009", "2012-2013", "2013-2014"],
+				"answer": "2012-2013",
+				"table_idx": 3,
+				"task_id": "task2"
+			},
+			{
+				"context": "The economic growth of a country's regions over a year is shown in this table.",
+				"question": "During which month did the New England region experience the highest growth?",
+				"answer_choices": ["January", "April", "October", "November"],
+				"answer": "October",
+				"table_idx": 17,
+				"task_id": "task3"
+			}
+		],
+		[
+			{
+				"context": "This is a train schedule showing stops and pickup times for the daily trains by train number.",
+				"question": "What is the train number for the latest Northbound train that gets you from California Avenue to San Mateo?",
+				"answer_choices": ["101", "105", "301", "505"],
+				"answer": "105",
+				"table_idx": 4,
+				"task_id": "task4"
+			},
+			{
+				"context": "This is a train schedule showing stops and pickup times for the daily trains by train number.",
+				"question": "When does train 202 stop at ORNDA?",
+				"answer_choices": ["6:22am", "6:37am", "6:42am", "6:57am"],
+				"answer": "6:37am",
+				"table_idx": 18,
+				"task_id": "task5"
+			}
+		],
+		[
+			{
+				"context": "This table is about student debt for higher education.",
+				"question": "Which undergraduate degree group had the least % that borrowed between $15,000 and $29,999?",
+				"answer_choices": ["Business and management", "Engineering, mathematics", "Humanities or social sciences", "Other"],
+				"answer": "Engineering, mathematics",
+				"table_idx": 5,
+				"task_id": "task6"
+			},
+			{
+				"context": "This table shows how many people are estimated to have disabilities by age group.",
+				"question": "How many people aged 21 to 64 were employed with a severe disability in 2010?",
+				"answer_choices": ["261", "5,570", "9,193", "20,286"],
+				"answer": "5,570",
+				"table_idx": 19,
+				"task_id": "task7"
+			}
+		],
+		[
+			{
+				"context": "This table compares iPhones.",
+				"question": "Which of the following is an iPhone X feature that is not the same as the iPhone 7?",
+				"answer_choices": ["Auto HDR for photos", "F/2.2 aperture", "Retina Flash", "7MP photos"],
+				"answer": "Auto HDR for photos",
+				"table_idx": 6,
+				"task_id": "task8"
+			},
+			{
+				"context": "This table compares Android Smartphones.",
+				"question": "Which phone is the biggest?",
+				"answer_choices": ["Google Nexus 6", "LG G3", "Samsung Galaxy Note 4", "iPhone 7"],
+				"answer": "Google Nexus 6",
+				"table_idx": 20,
+				"task_id": "task9"
+			}
+		],
+		[
+			{
+				"context": "This table compares iPhones.",
+				"question": "Which portrait lighting effect is unique to the iPhone SE?",
+				"answer_choices": ["Contour", "High-Key Mono", "Stage", "Studio Mono"],
+				"answer": "High-Key Mono",
+				"table_idx": 7,
+				"task_id": "task10"
+			},
+			{
+				"context": "This table compares Android Smartphones.",
+				"question": "Which phone can have the most storage, including optional SD cards?",
+				"answer_choices": ["Google Nexus 6", "LG G3", "Samsung Galaxy Note 4", "iPhone 7"],
+				"answer": "Samsung Galaxy Note 4",
+				"table_idx": 21,
+				"task_id": "task11"
+			}
+		],
+		[
+			{
+				"context": "Table of Reese Witherspoon's movie roles.",
+				"question": "What character did Reese Witherspoon play in Best Laid Plans?",
+				"answer_choices": ["Elle Woods", "Kate", "Lissa", "Rosita"],
+				"answer": "Lissa",
+				"table_idx": 8,
+				"task_id": "task12"
+			},
+			{
+				"context": "Table of Nicole Kidman's movie roles.",
+				"question": "In what movie did Kidman play Sarah Ashley?",
+				"answer_choices": ["Australia", "Lord of the Rings", "Moulin Rouge!", "The Invasion"],
+				"answer": "Australia",
+				"table_idx": 22,
+				"task_id": "task13"
+			}
+		],
+		[
+			{
+				"context": "Listing of common Australian Government acronyms.",
+				"question": "What does NEC stand for?",
+				"answer_choices": ["National Economic Center", "New England Convervatory", "Nippon Electric Company", "Not Elsewhere Classified"],
+				"answer": "Not Elsewhere Classified",
+				"table_idx": 9,
+				"task_id": "task14"
+			},
+			{
+				"context": "Listing of common USA Government acronyms.",
+				"question": "What is the acroynm for the only trade agreement found in the table?",
+				"answer_choices": ["EFTA", "NAFTA", "QDE", "UFO"],
+				"answer": "NAFTA",
+				"table_idx": 23,
+				"task_id": "task15"
+			}
+		],
+		[
+			{
+				"context": "Episodes in Season 2 of the television series Grey's Anatomy.",
+				"question": "For the episodes written by Shonda Rhimes, how many different directors were there?",
+				"answer_choices": ["1", "2", "3", "4"],
+				"answer": "3",
+				"table_idx": 10,
+				"task_id": "task16"
+			},
+			{
+				"context": "Episodes in Season 11 of the television series Grey's Anatomy.",
+				"question": "What is the name of the episode that had the longest time between when it aired and the previous episode aired?",
+				"answer_choices": ["Got to Be Real", "The Great Pretender", "Where Do We Go From Here?", "You're Home"],
+				"answer": "Where Do We Go From Here?",
+				"table_idx": 24,
+				"task_id": "task17"
+			}
+		],
+		[
+			{
+				"context": "This table lists definitions for farming terminology.",
+				"question": "What do you call a large area of land used to farm a single crop?",
+				"answer": "Broadacre",
+				"answer_choices": ["Broadacre", "Farm", "Field", "Food Miles"],
+				"table_idx": 11,
+				"task_id": "task18"
+			},
+			{
+				"context": "This table contains definitions of geology terms.",
+				"question": "Which metamorphic rock creates fragments with sharp angles when broken?",
+				"answer_choices": ["Calcite", "Limestone", "Pumice", "Quartzite"],
+				"answer": "Quartzite",
+				"table_idx": 25,
+				"task_id": "task19"
+			}
+		],
+		[
+			{
+				"context": "This table describes problems and solutions for a medical device called a CPAP which delivers pressurized air through a tube to a person's mouth or nose to prevent sleep apnea.",
+				"question": "What problem may be caused by a dirty air filter?",
+				"answer_choices": ["No Airflow Occurs", "Airflow Too Hot", "Airflow Pressure Too High or Low", "Ramp Up Feature Does Not Work"],
+				"answer": "Airflow Too Hot",
+				"table_idx": 12,
+				"task_id": "task20"
+			},
+			{
+				"context": "This guide informs you how and why to perform routine home maintenance.",
+				"question": "What tool should you use to remove debris from gutters?",
+				"answer_choices": ["Leaf Blower", "Shovel", "Trowel", "Vacuum Cleaner"],
+				"answer": "Trowel",
+				"table_idx": 26,
+				"task_id": "task21"
+			}
+		],
+		[
+			{
+				"context": "This table ranks industries across time based on their percentage of the total economy.",
+				"question": "Which two years have the highest overlap in top-5 industries (ignoring the ordering)?",
+				"answer_choices": ["2001 & 2006", "2001 & 2011", "2006 & 2011", "2011 & 2014"],
+				"answer": "2011 & 2014",
+				"table_idx": 13,
+				"task_id": "task22"
+			},
+			{
+				"context": "This table shows the top 5 teams for Womens Beach Volleyball in the Olympics. Each team has 2 athletes.",
+				"question": "Which athlete appears 3 times on a top 4 team for the years shown?",
+				"answer_choices": ["Jackie Silva", "Kerri Walsh", "Natalie Cook", "Sandra Pires"],
+				"answer": "Natalie Cook",
+				"table_idx": 27,
+				"task_id": "task23"
+			}
+		],
+		[
+			{
+				"context": "This is a wine menu for a restaurant.",
+				"question": "In what year was the cheapest bottle of Italian wine on the menu made?",
+				"answer_choices": ["'16", "'17", "'18", "'19"],
+				"answer": "'17",
+				"table_idx": 14,
+				"task_id": "task24"
+			},
+			{
+				"context": "This is a wine menu for a restaurant.",
+				"question": "What 2 countries are the chardonnay wines from?",
+				"answer_choices": ["France & South Africa", "France and Italy", "Italy & USA", "Italy & South Africa"],
+				"answer": "France & South Africa",
+				"table_idx": 28,
+				"task_id": "task25"
+			}
+		]
+	]
+}

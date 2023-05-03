@@ -1,0 +1,1096 @@
+<!-- 
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2022 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+-->
+
+<html>
+<head>
+<style>
+table { border-collapse: collapse;}
+td, th { border: 1px solid black; padding: 3px;}
+.no_border { border: none; padding-bottom: 0px; padding-top: 0px; margin-bottom: 0px; }
+ol { line-height: 130% }
+</style>
+<script src="https://cdn.plot.ly/plotly-2.9.0.min.js"></script>
+<script>
+
+//////////////////// Constants //////////////////////////
+
+const likert_width = 300;
+const likert_height = 36;
+const box_plot_width = likert_width;
+const box_plot_height = likert_height + 6;
+const likert_colors = ['DarkBlue', 'LightSkyBlue', 'LightSlateGrey', 'LightSalmon', 'OrangeRed'];
+const likert_diff_colors = ['DarkBlue', 'Blue', 'DeepSkyBlue', 'LightSkyBlue', 'LightSlateGrey', 'LightPink', 'LightSalmon', 'DarkSalmon', 'OrangeRed', 'DarkRed'];
+var d;
+var are_z_scores = false;
+
+
+function get_all_table_id_pairs() {
+	return  [['1', '15'], ['2', '16'], ['3', '17'], ['4', '18'], ['5', '19'], ['6', '20'], ['7', '21'], 
+			 ['8', '22'], ['9', '23'], ['10', '24'], ['11', '25'], ['12', '26'], ['13', '27'], ['14', '28']];
+}
+
+function get_all_table_id_pairs_flat() {
+	return  ['1', '15', '2', '16', '3', '17', '4', '18', '5', '19', '6', '20', '7', '21', 
+			 '8', '22', '9', '23', '10', '24', '11', '25', '12', '26', '13', '27', '14', '28'];
+}
+
+function get_first_half_table_ids() {
+	return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'];
+}
+
+function get_all_table_ids() {
+	var arr = []
+	for (var i = 1; i <= 28; i++) {
+		arr.push(String(i));
+	}
+	return arr;
+}
+
+function get_ind_table() {
+	return document.getElementById('ind_table');
+}
+
+function get_pair_table() {
+	return document.getElementById('pair_table');
+}
+
+
+function get_toc() {
+	return document.getElementById('toc');
+}
+
+
+function get_combined_table_id() {
+	return '<b>All Tables</b>';
+}
+
+
+function get_combined_design_id() {
+	return '<b>All Designs</b>';
+}
+
+
+function get_combined_answer_text() {
+	return '<b>All Answers</b>';
+}
+
+
+function get_pair_answers() {
+	return ['correct', 'incorrect', 'skipped'];
+}
+
+
+function get_pair_answers_aggregated() {
+	//return ['all', 'correct_correct', 'correct_incorrect', 'incorrect_correct', 'incorrect_incorrect'];
+	//return ['all', 'correct_correct'];
+	return ['correct_correct'];
+}
+
+
+function get_aggregated_answer_marker() {
+	return "aggregated_answer_marker";
+}
+
+
+function get_pair_answer_names_aggregated() {
+	//return ['All', 'Both Correct', 'Correct/Incorrect', 'Incorrect/Correct', 'Both Incorrect'];
+	//return ['All', 'Both Correct'];
+	return ['Both Correct'];
+}
+
+
+function get_answer_suffixes() {
+	//return ['_all', '_correct', '_incorrect', '_skip'];
+	//return ['_all', '_correct'];
+	return ['_correct'];
+}
+
+
+function get_answer_display_names() {
+	//return [get_combined_answer_text(), 'Correct', 'Incorrect', 'Skipped'];
+	//return [get_combined_answer_text(), 'Correct'];
+	return ['Correct'];
+}
+
+
+function get_ind_likert_keys() {
+	return ['1', '2', '3', '4', '5'];
+}
+
+
+function get_pair_likert_keys() {
+	return ['-4', '-3', '-2', '-1', '0', '1', '2', '3', '4'];
+
+}
+
+function get_aggregated_keys(data) {
+	arr = []
+	for (const [key, value] of Object.entries(data['aggregated_tables'])) {
+		if (key.startsWith('_')) {
+			continue;
+		} else {
+			arr.push(key);
+		}
+	}
+	return arr;
+}
+
+//////////////////// Table Manipulation //////////////////////////
+
+var _ind_row_head_count = 0;
+function add_ind_section_row(text) {
+	var label = String(_ind_row_head_count) + "_ind";
+	_ind_row_head_count++;
+	var html = '<h1 id="' + label + '">' + text + "</h1> <a href=#top>top</a>";
+
+	var table = get_ind_table();
+	var row = table.insertRow(-1);
+
+	var cell = row.insertCell(0);
+	cell.colSpan = 7;
+	cell.innerHTML = html;
+	add_toc(label, text);
+}
+
+var _pair_row_head_count = 0;
+function add_pair_section_row(text) {
+	var label = String(_pair_row_head_count) + "_pair";
+	_pair_row_head_count++;
+	var html = '<h1 id="' + label + '">' + text + "</h1> <a href=#top>top</a>";
+
+	var table = get_pair_table();
+	var row = table.insertRow(-1);
+
+	var cell = row.insertCell(0);
+	cell.colSpan = 10;
+	cell.innerHTML = html;
+	add_toc(label, text);
+}
+
+function add_toc(label, text) {
+	var toc = get_toc();
+	var entry = document.createElement('li');
+	entry.innerHTML = '<a href=#' + label + ">" + text + "</a>";
+	toc.appendChild(entry);
+}
+
+
+function add_ind_blank_row() {
+	var table = get_ind_table();
+	var row = table.insertRow(-1);
+
+	var cell = row.insertCell(0);
+	cell.colSpan = 9;
+}
+
+function add_ind_row(table_id, design_id, answer, N, time_mean, time, difficulty, satisfaction) {
+	var table = get_ind_table();
+	var row = table.insertRow(-1);
+
+	var table_id_cell = row.insertCell();
+	table_id_cell.innerHTML = table_id;
+
+	var design_id_cell = row.insertCell();
+	design_id_cell.innerHTML = design_id;
+
+	var answer_cell = row.insertCell();
+	answer_cell.innerHTML = answer;
+
+	var N_cell = row.insertCell();
+	N_cell.innerHTML = N;
+
+	var time_mean_cell = row.insertCell();
+	time_mean_cell.innerHTML =  time_mean;
+
+	var time_cell = row.insertCell();
+	time_cell.classList.add("no_border");
+	time_cell.appendChild(time);
+
+	var difficulty_cell = row.insertCell();
+	difficulty_cell.appendChild(difficulty);
+
+	var satisfaction_cell = row.insertCell();
+	satisfaction_cell.appendChild(satisfaction);
+}
+
+function add_pair_row(table_id1, design_id1, design_id2, answer_name, N, mean_time, time_ele, diff_ele, sat_ele) {
+	var table = get_pair_table();
+	var row = table.insertRow(-1);
+
+	var table_id1_cell = row.insertCell();
+	table_id1_cell.innerHTML = table_id1;
+
+	var design_id1_cell = row.insertCell();
+	design_id1_cell.innerHTML = design_id1;
+
+	var design_id2_cell = row.insertCell();
+	design_id2_cell.innerHTML = design_id2;
+
+	var answer_name_cell = row.insertCell();
+	answer_name_cell.innerHTML = answer_name;
+
+	var N_cell = row.insertCell();
+	N_cell.innerHTML = N;
+
+	var mean_time_cell = row.insertCell();
+	mean_time_cell.innerHTML = mean_time;
+	
+	var time_cell = row.insertCell();
+	time_cell.classList.add("no_border");
+	time_cell.appendChild(time_ele);
+
+	var difficulty_cell = row.insertCell();
+	difficulty_cell.appendChild(diff_ele);
+
+	var satisfaction_cell = row.insertCell();
+	satisfaction_cell.appendChild(sat_ele);
+}
+
+function add_ind_single_row(table_id, design_id, answer_name, answer_suffix, data_entry) {
+	var N = data_entry['num' + answer_suffix];
+	var N_all = data_entry['num_all'];
+	var perc = data_entry['perc' + answer_suffix];
+	var times = data_entry['times_taken' + answer_suffix];
+	var difficulty = data_entry['difficulty' + answer_suffix];
+	var satisfaction = data_entry['satisfaction' + answer_suffix];
+
+
+	var N_ele = get_N_ele(N, perc, 1, N_all);
+	var time_mean_ele = get_time_mean_ele(times, N);
+	var time_ele = get_time_ele(times, false);
+	var keys = get_ind_likert_keys()
+	var diff_ele = get_likert_element(difficulty, keys);
+	var sat_ele = get_likert_element(satisfaction, keys);
+	add_ind_row(table_id, design_id, answer_name, N_ele, time_mean_ele, time_ele, diff_ele, sat_ele);
+}
+
+
+function add_pair_single_row(table_id1, design_id1, design_id2, answer_name, data_entry, N_all) {
+	var N = data_entry['num'];
+	var perc = 100 * N / N_all;
+	var time_diffs = data_entry['times_taken_diff'];
+	var difficulty_diffs = data_entry['difficulty_diff'];
+	var satisfaction_diffs = data_entry['satisfaction_diff'];
+
+	var N_ele = get_N_ele(N, perc, 1, N_all);
+	var mean_time_ele = get_time_mean_ele(time_diffs, N);
+	var time_ele = get_time_ele(time_diffs, true);
+	var keys = get_pair_likert_keys()
+	var diff_ele = get_likert_element(difficulty_diffs, keys);
+	var sat_ele = get_likert_element(satisfaction_diffs, keys);
+
+	add_pair_row(table_id1, design_id1, design_id2, answer_name, N_ele, mean_time_ele, time_ele, diff_ele, sat_ele);
+}
+
+
+//////////////////// Stats/Math Functions //////////////////////////
+
+function sum(arr) {
+	var sum = 0;
+	for (var i = 0; i < arr.length; i++) {
+		sum += arr[i];
+	}
+	return sum;
+}
+
+
+function mean(arr) {
+	if (arr.length) {
+		var total = sum(arr);
+		return total / arr.length;
+	} else {
+		return 0;
+	}
+}
+
+
+function std_of_arr(arr) {
+	if (arr.length) {
+		var arr_mean = mean(arr);
+		var sum_sq_res = 0;
+		for (var i = 0; i < arr.length; i++) {
+			var res = arr[i] - arr_mean;
+			sum_sq_res += res * res;
+		}
+		return Math.sqrt(sum_sq_res / arr.length);
+	} else {
+		return 0;
+	}
+}
+
+
+function percentile(arr, p) {
+	var r = p / 100.0 * (arr.length - 1);
+	if (r > arr.length - 1) {
+		return arr[arr.length-1];
+	} else if (r <= 0) {
+		return arr[0];
+	}
+	var r_floor = Math.floor(r);
+	var r_frac = r - r_floor;
+	return arr[r_floor] + r_frac * (arr[r_floor+1] - arr[r_floor]);
+}
+
+function bernouli_95_conf_interval(n, p) {
+	if (n == 0) {
+		return 0;
+	} 
+	if (p == 0 || p == 1) {
+		return 3 / n;
+	} 
+	var alpha_95 = 1.96;
+	return alpha_95 * Math.sqrt(p * (1 - p) / n);
+}
+
+//////////////////// Cell Contents //////////////////////////
+
+function get_time_mean_ele(times, N) {
+	var avg_time;
+	var std;
+	var prec = 1;
+	if (are_z_scores) {
+		avg_time = mean(times);
+		std = std_of_arr(times) / Math.sqrt(N);
+		prec = 2;
+	} else {
+		avg_time = mean(times) / 1000;
+		std = std_of_arr(times) / 1000 / Math.sqrt(N);
+	}
+	var lower = avg_time - 1.96 * std;
+	var upper = avg_time + 1.96 * std;
+
+	var text = avg_time.toFixed(prec) + " (" + lower.toFixed(prec) + ", " + upper.toFixed(prec) + ")";
+	return text
+}
+
+
+function get_time_ele(times, is_pair) {
+	var bottom_pad = 12;
+	var horz_pad = 5;
+	var max_circles = 20;
+
+	var max_time;
+	var min_time;
+	if (is_pair) {
+		if (are_z_scores) {
+			max_time = 4;
+			min_time = -4;
+		} else {
+			max_time = 120000;
+			min_time = -120000;
+		}
+	} else {
+		if (are_z_scores) {
+			max_time = 3;
+			min_time = -3;
+		} else {
+			max_time = 120000;
+			min_time = 0;
+		}
+	}
+	var range = max_time - min_time
+
+	var canvas = document.createElement('canvas');
+	canvas.width = box_plot_width;
+	canvas.height = box_plot_height;
+	var ctx = canvas.getContext('2d');
+
+	if (times.length == 0) {
+		ctx.fillStyle = 'Gainsboro';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		return canvas;
+	}
+
+	var plot_width = canvas.width - 2 * horz_pad;
+	var plot_height = canvas.height - bottom_pad;
+	const radius = 4;
+
+	ctx.strokeStyle = 'gray';
+	ctx.lineWidth = 2;
+
+	if (times.length >= 5) {
+		// draw box plot with wiskers
+		var lower_wisker = Math.min(percentile(times, 10), max_time);
+		var lower_quart = Math.min(percentile(times, 25), max_time);
+		var median = Math.min(percentile(times, 50), max_time);
+		var upper_quart = Math.min(percentile(times, 75), max_time);
+		var upper_wisker = Math.min(percentile(times, 90), max_time);
+		var avg_time = Math.min(mean(times), max_time);
+
+		var wisker_height = 0.75 * plot_height;
+		var lower_wisker_x = plot_width * (lower_wisker - min_time) / range; 
+		var lower_quart_x = plot_width * (lower_quart - min_time) / range; 
+		var median_x = plot_width * (median - min_time) / range; 
+		var upper_quart_x = plot_width * (upper_quart - min_time) / range; 
+		var upper_wisker_x = plot_width * (upper_wisker - min_time) / range; 
+		var avg_x =  plot_width * (avg_time - min_time) / range; 
+
+		ctx.strokeRect(lower_quart_x + horz_pad, 0, (upper_quart_x - lower_quart_x), plot_height);
+		ctx.strokeRect(median_x + horz_pad, 0, 0, plot_height);
+
+		ctx.lineWidth = 1;
+		ctx.strokeRect(lower_wisker_x + horz_pad, (plot_height - wisker_height) / 2, 0, wisker_height);
+		ctx.strokeRect(lower_wisker_x + horz_pad, plot_height / 2, (lower_quart_x - lower_wisker_x), 0);
+		ctx.strokeRect(upper_quart_x + horz_pad, plot_height / 2, (upper_wisker_x - upper_quart_x), 0);
+		ctx.strokeRect(upper_wisker_x + horz_pad, (plot_height - wisker_height) / 2, 0, wisker_height);
+
+		ctx.fillStyle = 'green';
+		ctx.beginPath();
+		ctx.arc(avg_x, plot_height / 2, radius, 0, 2 * Math.PI);
+		ctx.fill();
+	}
+
+	// draw x-axis
+	const tick_height = 3
+	ctx.strokeStyle = 'black';
+	ctx.fillStyle = 'black';
+	ctx.lineWidth = 1;
+	ctx.textAlign = 'center';
+	ctx.strokeRect(horz_pad, canvas.height, plot_width, 0);
+	var inc = 10000; 
+	var stroke = 30000;
+	var trans = 1000;
+	if (are_z_scores) {
+		inc = 0.25;
+		stroke = 1;
+		trans = 1
+	}
+	for (var i = min_time; i <= max_time; i += inc) {
+		var x =  plot_width * (i - min_time) / range;
+		ctx.strokeRect(horz_pad + x, canvas.height - tick_height, 0, tick_height);
+
+		if (i % stroke == 0) {
+			var label = String(i / trans);
+			ctx.font = "10px Mono";
+			ctx.fillText(label, horz_pad + x, canvas.height - tick_height - 1);
+		}
+	}
+
+	// draw regularly spaced samples
+	ctx.globalAlpha = 0.3;
+	ctx.fillStyle = 'blue';
+	
+	for (var i = 0; i < Math.min(10, times.length / 2); i+= 1) {
+		var time = Math.min(times[i], max_time);
+		var x_center = plot_width * (time - min_time) / range;
+
+		ctx.beginPath();
+		ctx.arc(x_center, plot_height / 2, radius, 0, 2 * Math.PI);
+		ctx.fill();
+	}
+	for (var i = Math.max(times.length - 10, Math.floor(times.length / 2)); i < times.length; i+= 1) {
+		var time = Math.min(times[i], max_time);
+		var x_center = plot_width * (time - min_time) / range;
+
+		ctx.beginPath();
+		ctx.arc(x_center, plot_height / 2, radius, 0, 2 * Math.PI);
+		ctx.fill();
+	}
+	return canvas;
+}
+
+
+function get_likert_text(data) {
+	var total = 0;
+	for (var i = 1; i <= 5; i++) {
+		var num = data[String(i)];
+		total += num;
+	}
+	if (total == 0) {
+		return "n/a";
+	}
+	var text = "" 
+	for (var i = 1; i <= 5; i++) {
+		var num = data[String(i)];
+		var perc = 100 * num / total;
+		text += get_N_ele(num, perc, 0)
+		if (i < 5) {
+			text += " / ";
+		}
+	}
+	return text;
+}
+
+
+function get_likert_element(data, keys) {
+	var canvas = document.createElement('canvas');
+	canvas.width = likert_width;
+	canvas.height = likert_height;
+	var total = 0;
+	for (var i = 0; i < keys.length; i++) {
+		var key = keys[i];
+		var num = data[key];
+		total += num;
+	}
+	var ctx = canvas.getContext("2d");
+
+	if (total > 0) {
+		canvas.style.border = "1px solid black";
+		prev_x = 0;
+		var colors;
+		if (keys.length <= 5) {
+			colors = likert_colors;
+		} else {
+			colors = likert_diff_colors;
+		}
+
+		for (var i = 0; i <= keys.length; i++) {
+			var key = keys[i];
+			var num = data[key];
+			var perc =  num / total;
+			var label = (100 * perc).toFixed(0) + "%";
+			var bar_width = Math.round(canvas.width * perc);
+			var color = colors[i];
+
+			ctx.fillStyle = color;
+			var x2 = prev_x + bar_width;
+			if (i == 5) {
+				x2 = canvas.width;
+			}
+			ctx.fillRect(prev_x, 0, x2, canvas.height);
+			ctx.fillStyle = 'white';
+
+			ctx.font = "12px Arial";
+			if (perc >= 0.06) {
+				ctx.fillText(label, prev_x + 3, canvas.height / 2 + 6);
+			}
+			prev_x += bar_width
+		}
+	} else {
+		ctx.fillStyle = 'Gainsboro';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+	}
+	return canvas
+}
+
+
+function get_N_ele(N, perc, num_dec, N_all) {
+	var p = perc / 100;
+	var conf_int = 100 * bernouli_95_conf_interval(N_all, p);
+
+	var display_perc = perc.toFixed(num_dec);
+	var display_conf = conf_int.toFixed(num_dec);
+	if (N != N_all) {
+		var text = String(N) + " (" + display_perc + "% ± " + display_conf + ")";
+	} else {
+		var text = String(N) + " (" + display_perc + "%)";
+	}
+	return text;
+}
+
+
+//////////////////// Individual Table Row Iters //////////////////////////
+
+
+function add_single_ind_row_helper(table_ids, design_id, answer_name, answer_suffix, data) {
+	if (!Array.isArray(table_ids)) {
+		table_ids = [table_ids];
+	}
+	for (var i = 0; i < table_ids.length; i++) {
+		var data_entry = get_data_entry(table_ids[i], design_id, data);
+		if (!data_entry) {
+			console.log("Could not find data_entry for ", table_ids[i], design_id);
+		}
+		add_ind_single_row(table_ids[i], design_id, answer_name, answer_suffix, data_entry);
+	}
+}
+
+
+// for individual tables, not pairs
+function get_data_entry(table_id, design_id, data) {
+	var all_aggregated_table_ids = get_aggregated_keys(data)
+
+	if (all_aggregated_table_ids.includes(table_id)) {
+		if (design_id == get_combined_design_id()) {
+			return data['aggregated_tables'][table_id];
+		} else {
+			return data['aggregated_tables_x_designs'][design_id][table_id];
+		}
+	} else if (design_id == get_combined_design_id()) {
+		return data['individual_tables'][table_id];
+	} else {
+		return data['individual_tables_x_designs'][table_id][design_id];
+	}
+}
+
+// table -> answer -> design
+function add_table_answer_design(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var t = 0; t < table_ids.length; t++) {
+		var table_id = table_ids[t];
+		for (var a=0; a < answer_suffixes.length; a++) {
+			var answer_suffix = answer_suffixes[a];
+			var answer_name = answer_names[a];
+			for (var d = 0; d < design_ids.length; d++) {
+				var design_id = design_ids[d];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+// table -> design -> answer
+function add_table_design_answer(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var t = 0; t < table_ids.length; t++) {
+		var table_id = table_ids[t];
+		for (var d = 0; d < design_ids.length; d++) {
+			var design_id = design_ids[d];
+			for (var a=0; a < answer_suffixes.length; a++) {
+				var answer_suffix = answer_suffixes[a];
+				var answer_name = answer_names[a];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+
+// design -> table -> answer
+function add_design_table_answer(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var d = 0; d < design_ids.length; d++) {
+		var design_id = design_ids[d];
+		for (var t = 0; t < table_ids.length; t++) {
+			var table_id = table_ids[t];
+			for (var a=0; a < answer_suffixes.length; a++) {
+				var answer_suffix = answer_suffixes[a];
+				var answer_name = answer_names[a];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+// design -> answer -> table
+function add_design_answer_table(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var d = 0; d < design_ids.length; d++) {
+		var design_id = design_ids[d];
+		for (var a=0; a < answer_suffixes.length; a++) {
+			var answer_suffix = answer_suffixes[a];
+			var answer_name = answer_names[a];
+			for (var t = 0; t < table_ids.length; t++) {
+				var table_id = table_ids[t];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+// answer -> design -> table
+function add_answer_design_table(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var a=0; a < answer_suffixes.length; a++) {
+		var answer_suffix = answer_suffixes[a];
+		var answer_name = answer_names[a];
+		for (var d = 0; d < design_ids.length; d++) {
+			var design_id = design_ids[d];
+			for (var t = 0; t < table_ids.length; t++) {
+				var table_id = table_ids[t];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+// answer -> table -> design
+function add_answer_table_design(table_ids, design_ids, data, insert_blank = 1) {
+	const answer_suffixes = get_answer_suffixes();
+	const answer_names = get_answer_display_names();
+	for (var a=0; a < answer_suffixes.length; a++) {
+		var answer_suffix = answer_suffixes[a];
+		var answer_name = answer_names[a];
+		for (var t = 0; t < table_ids.length; t++) {
+			var table_id = table_ids[t];
+			for (var d = 0; d < design_ids.length; d++) {
+				var design_id = design_ids[d];
+				add_single_ind_row_helper(table_id, design_id, answer_name, answer_suffix, data);
+				if (insert_blank >= 2) { add_ind_blank_row(); }
+			}
+			if (insert_blank >= 1) { add_ind_blank_row(); }
+		}
+		if (insert_blank >= 0) { add_ind_blank_row(); }
+	}
+}
+
+//////////////////// Pair Table Row Iters //////////////////////////
+
+
+
+
+
+
+function get_pair_data_entry(table_id1, design_id1, design_id2, answer, data) {
+	var all_aggregated_table_ids = get_aggregated_keys(data)
+	var entry, n_all;
+	if (all_aggregated_table_ids.includes(table_id1)) {
+		// unordered aggregated tables
+		if (design_id2 == get_combined_design_id()) {
+			// unordered aggregated tables with designs and answer pairs aggregated
+			entry = data['order_table_answer_design_aggregated_pairs'][table_id1][design_id1][answer];
+			n_all = data['order_table_answer_design_aggregated_pairs'][table_id1][design_id1]['all']['num'];
+		} else {
+			// unordered aggregated tables with all design pairs but aggregated answer pairs
+			entry = data['order_table_answer_aggregated_pairs'][table_id1][design_id1][design_id2][answer];
+			n_all = data['order_table_answer_aggregated_pairs'][table_id1][design_id1][design_id2]['all']['num'];
+		}
+	} else {
+		// distinct table pairs
+		if (design_id2 == get_combined_design_id()) {
+			// unordered distinct table pairs aggregated over 2nd design and answers
+			entry = data['order_answer_design_aggregated_pairs'][table_id1][design_id1][answer];
+			n_all = data['order_answer_design_aggregated_pairs'][table_id1][design_id1]['all']['num'];
+		} else {
+			// unordered distinct table pairs with design pairs
+			entry = data['order_answer_aggregated_pairs'][table_id1][design_id1][design_id2][answer];
+			n_all = data['order_answer_aggregated_pairs'][table_id1][design_id1][design_id2]['all']['num'];
+		}
+	}
+	return {'data_entry': entry, 'n_all': n_all};
+}
+
+
+function add_pair_row_helper(table_id1, design_id1, design_id2, answer, answer_name, data) {
+	var out = get_pair_data_entry(table_id1, design_id1, design_id2, answer, data);
+	var data_entry = out['data_entry'];
+	var N_all = out['n_all'];
+	add_pair_single_row(table_id1, design_id1, design_id2, answer_name, data_entry, N_all);
+}
+
+
+function add_pair_unordered_design_answer_aggregated(data) {
+	var table_ids = get_all_table_id_pairs_flat();
+	var all_design_ids = data['design_ids']
+	var design_id2 = get_combined_design_id();
+	var answers = get_pair_answers_aggregated();
+
+	for (t = 0; t < table_ids.length; t++) {
+		var table_id = table_ids[t];
+		for (var d1 = 0; d1 < all_design_ids.length; d1++) {
+			var design_id1 = all_design_ids[d1];
+			for (var a = 0; a < answers.length; a++) {
+				var answer = answers[a];
+				add_pair_row_helper(table_id, design_id1, design_id2, answer, answer, data);
+			}
+		}
+	}
+}
+
+
+function add_pair_tables_design_pairs_answer(data) {
+	var all_design_ids = data['design_ids']
+	var answers_aggregated = get_pair_answers_aggregated();
+	var answer_names = get_pair_answer_names_aggregated();
+	var aggregated_table_names = get_aggregated_keys(data);
+
+	for (var t = 0; t < aggregated_table_names.length; t++) {
+		var table_group = aggregated_table_names[t];
+		for (var d1 = 0; d1 < all_design_ids.length; d1++) {
+			var design_id1 = all_design_ids[d1];
+			for (var d2 = 0; d2 < all_design_ids.length; d2++) {
+				var design_id2 = all_design_ids[d2];
+				for (var a = 0; a < answers_aggregated.length; a++) {
+					var answer = answers_aggregated[a];
+					var answer_name = answer_names[a];
+					add_pair_row_helper(table_group, design_id1, design_id2, answer, answer_name, data);
+				}
+			}
+		}
+	}
+
+}
+
+function add_pair_design_pairs_answer(data) {
+	var all_design_ids = data['design_ids']
+	var answers_aggregated = get_pair_answers_aggregated();
+	var answer_names = get_pair_answer_names_aggregated();
+	var table_ids = get_all_table_ids();
+
+	for (var t = 0; t < table_ids.length; t++) {
+		var table_id = table_ids[t];
+		for (var d1 = 0; d1 < all_design_ids.length; d1++) {
+			var design_id1 = all_design_ids[d1];
+			for (var d2 = 0; d2 < all_design_ids.length; d2++) {
+				var design_id2 = all_design_ids[d2];
+				for (var a = 0; a < answers_aggregated.length; a++) {
+					var answer = answers_aggregated[a];
+					var answer_name = answer_names[a];
+					add_pair_row_helper(table_id, design_id1, design_id2, answer, answer_name, data);
+				}
+			}
+		}
+	}
+
+}
+
+function add_pair_tables_design2_answer(data) {
+	var all_design_ids = data['design_ids']
+	var answers_aggregated = get_pair_answers_aggregated();
+	var answer_names = get_pair_answer_names_aggregated();
+	var aggregated_table_names = get_aggregated_keys(data);
+	var design_id2 = get_combined_design_id();
+
+	for (var t = 0; t < aggregated_table_names.length; t++) {
+		var table_group = aggregated_table_names[t];
+		for (var d = 0; d < all_design_ids.length; d++) {
+			var design_id1 = all_design_ids[d];
+			for (var a = 0; a < answers_aggregated.length; a++) {
+				var answer = answers_aggregated[a];
+				var answer_name = answer_names[a];
+				add_pair_row_helper(table_group, design_id1, design_id2, answer, answer_name, data);
+			}
+		}
+	}
+
+}
+
+function add_pair_design2_answer(data) {
+	var all_design_ids = data['design_ids']
+	var answers_aggregated = get_pair_answers_aggregated();
+	var answer_names = get_pair_answer_names_aggregated();
+	var design_id2 = get_combined_design_id();
+	var table_ids = get_all_table_ids();
+
+	for (var t = 0; t < table_ids.length; t++) {
+		var table_id = table_ids[t];
+		for (var d = 0; d < all_design_ids.length; d++) {
+			var design_id1 = all_design_ids[d];
+			for (var a = 0; a < answers_aggregated.length; a++) {
+				var answer = answers_aggregated[a];
+				var answer_name = answer_names[a];
+				add_pair_row_helper(table_id, design_id1, design_id2, answer, answer_name, data);
+			}
+		}
+	}
+
+}
+
+
+
+//////////////////// High Level Functions //////////////////////////
+
+function make_individual_table(data) {
+	var aggregated_table_ids = get_aggregated_keys(data);
+	var combined_design_id_arr = [get_combined_design_id()];
+	var all_design_ids = data['design_ids']
+
+	add_ind_section_row("Aggregated Tables / Aggregated Designs / Answers");
+	add_table_design_answer(aggregated_table_ids, combined_design_id_arr, data, -1);
+
+	add_ind_section_row("Designs / Aggregated Tables / Answers");
+	add_design_table_answer(aggregated_table_ids, all_design_ids, data, 0);
+
+	add_ind_section_row("Aggregated Tables / Answers / Designs");
+	add_table_answer_design(aggregated_table_ids, all_design_ids, data, 1);
+
+	add_ind_section_row("Tables / Aggregated Designs / Answers");
+	add_table_design_answer(get_all_table_id_pairs_flat(), combined_design_id_arr, data, 1);
+
+	add_ind_section_row("Tables / Aggregated Designs / Answers / Pairs");
+	add_table_design_answer(get_all_table_id_pairs(), combined_design_id_arr, data, 2);
+
+	//add_ind_section_row("Tables / Designs / Answers");
+	//add_table_design_answer(get_all_table_id_pairs_flat(), all_design_ids, data, 1);
+
+	//add_ind_section_row("Tables / Designs / Answers / Pairs");
+	//add_table_design_answer(get_all_table_id_pairs(), all_design_ids, data, 2);
+
+	add_ind_section_row("Tables / Answers / Designs");
+	add_table_answer_design(get_all_table_id_pairs_flat(), all_design_ids, data, 1);
+}
+
+function make_pair_table(data) {
+
+	add_pair_section_row("Aggregated Tables / Aggregated 2<sup>nd</sup> Designs");
+	add_pair_tables_design2_answer(data);
+
+	add_pair_section_row("Aggregated Tables /  1<sup>st</sup> Design / 2<sup>nd</sup> Design");
+	add_pair_tables_design_pairs_answer(data);
+
+	add_pair_section_row("Individual Tables / Aggregated 2<sup>nd</sup> Designs");
+	add_pair_design2_answer(data);
+
+	add_pair_section_row("Individual Tables /  1<sup>st</sup> Design / 2<sup>nd</sup> Design");
+	add_pair_design_pairs_answer(data);
+}
+
+function add_histogram(prop_name, values) {
+	var parent_div = document.getElementById('participant_charts');
+
+	var href_div = document.createElement('div');
+	href_div.innerHTML = '<a href=#top>top</a>';
+	parent_div.appendChild(href_div);
+
+	var chart_div = document.createElement('div');
+	chart_div.id = prop_name
+	parent_div.appendChild(chart_div)
+
+	var trace = { x: values, type: 'histogram'};
+	var layout = {title: prop_name + " frequency", bargap: 0.05, bargroupgap: 0.2, xaxis: {title: prop_name}, yaxis: {title: 'participant count'}};
+	Plotly.newPlot(prop_name, [trace], layout);
+
+	// add to table of contents
+	var toc = get_toc();
+	var entry = document.createElement('li');
+	entry.innerHTML = '<a href=#' + prop_name + ">" + prop_name + "</a>";
+	toc.appendChild(entry);
+}
+
+function make_participant_charts(data) {
+	var stats = data['participant_stats'];
+	const keys = Object.keys(stats);
+	for (var i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		const values = stats[key];
+		add_histogram(key, values);
+	}
+	add_histogram("Scores", data['scores']);
+	add_histogram("Total_Time_Minutes", data['total_times']);
+}
+
+
+function make_comments(data) {
+	const parent_div = document.getElementById('comments');
+	const comment_types = ['difficulty', 'format', 'general'];
+	for (var i = 0; i < comment_types.length; i++) {
+		const comment_type = comment_types[i];
+		const comments = data[comment_type + '_comments'];
+		const sorted_comments = comments.sort((a,b) => a.length - b.length);
+
+		var child_div = document.createElement('div');
+		child_div.innerHTML = '<h1 id="' + comment_type + '">' + comment_type + " Comments</h1> <a href=#top>top</a>";
+		parent_div.appendChild(child_div);
+
+		var list = document.createElement('ol');
+		child_div.appendChild(list);
+
+		for (var j = 0; j < sorted_comments.length; j++) {
+			var comment = sorted_comments[j];
+			var entry = document.createElement('li');
+			entry.innerHTML = comment;
+			list.appendChild(entry);
+		}
+
+		// add to table of contents
+		var toc = get_toc();
+		var entry = document.createElement('li');
+		entry.innerHTML = '<a href=#' + comment_type + ">" + comment_type + " comments</a>";
+		toc.appendChild(entry);
+
+	}
+
+}
+
+
+function process_data(data) {
+	console.log("process_data()");
+	are_z_scores = data['is_z_scores'];
+
+	var urlParams = new URLSearchParams(window.location.search);
+	if (urlParams.has('pair')) {
+		make_pair_table(data);
+	} else {
+		make_individual_table(data);
+	}
+
+	make_participant_charts(data);
+	make_comments(data);
+
+	console.log("end process_data()");
+}
+
+
+function start() {
+	var urlParams = new URLSearchParams(window.location.search);
+	var result_name = '';
+	if (urlParams.has('results')) {
+		result_name = urlParams.get('results');
+	} else {
+		result_name = 'pilot2'
+	}
+
+	var xhttp = new XMLHttpRequest();
+
+	xhttp.open("GET", "/data_for_viewing/" + result_name + ".json", false);  // synchronous
+	xhttp.responseType = 'application/json';
+	xhttp.send(null);
+
+	if (xhttp.status == 200) {
+		var data = JSON.parse(xhttp.responseText);
+		d = data;
+		console.log(data);
+		process_data(data);
+	} else {
+		console.log("Error loading Data");
+		console.log(xhttp.status);
+		console.log(xhttp.responseText);
+	}
+}
+
+
+window.onload = start
+
+</script>
+</head>
+
+<body>
+
+<h1>Table Readability Results </h1>
+
+<ul id="toc">
+</ul>
+<h1> Individual Timings/Scores</h1>
+<table id="ind_table">
+<tr> <th> Table ID </th> <th> Design ID </th> <th> Answer </th> <th> N </th> <th> Mean Time </th>
+     <th> Time </th> <th> Difficulty </br> Very Easy to Very Difficult </th> <th> Satisfaction </br> Very Satisfied to Very Dissatisfied </th> </tr>
+</table>
+</br>
+</br>
+
+<h1> Pair Timings/Scores</h1>
+<table id="pair_table">
+<tr> <th> Table ID</th> <th> Design ID 1<sup>st</sup> </th> <th> Design ID 2<sup>nd</sup></th> 
+	<th> Answers </th> <th> N </th> <th> Mean Time </th> <th> Time Diff </th> <th> Difficulty Diff </br> -4 to +4 </th> <th> Satisfaction </br> -4 to +4 </th> </tr>
+</table>
+<div id="participant_charts"> </div>
+<div id="comments"> </div>
+
+</body>
+</html>

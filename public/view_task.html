@@ -1,0 +1,164 @@
+<!-- 
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2022 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+-->
+
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+<style>
+th { font-weight: normal; background-color: #f0f0f0; position: sticky; top: 0px; z-index: 101;}
+.row_sticky { font-weight: normal; background-color: #f0f0f0; position: sticky; left: 0px; z-index: 100;}
+table { border-collapse: collapse;line-height: 130%; }
+td, th { border: 3px solid black; padding: 10px;}
+</style>
+<script>
+
+
+function add_row(task, styles) {
+	console.log(task);
+	var table = document.getElementById("the_table");
+	var row = table.insertRow(-1);
+
+	// Table Id
+	var table_id = task['table_idx']
+	var cell = row.insertCell();
+	cell.innerHTML = '<p style="font-size:large"><b>' + table_id + '</b></p>';
+
+	// Context
+	cell = row.insertCell();
+	cell.innerHTML = task['context'];
+
+	// Question
+	cell = row.insertCell();
+	cell.innerHTML = task['question'];
+
+	// Answers
+	cell = row.insertCell();
+	var html = '<ul>';
+	var answer_choices = task['answer_choices'];
+	var correct_answer = task['answer'];
+	for (var i = 0; i < answer_choices.length; i++) {
+		var choice = answer_choices[i];
+		html += '<li>';
+		if (choice == correct_answer) {
+			html += '<b>' + choice + '</b>';
+		} else {
+			html += choice;
+		}
+		html += '</li>';
+	}
+	html += '</ul>';
+
+	cell.innerHTML = html;
+
+	for (var i = 0; i < styles.length; i++) {
+		cell = row.insertCell();
+		var query = '?worker_id=' + styles[i] + '&table_id=' + table_id;
+		cell.innerHTML = '<iframe width="275" height="560" src="/view_result2' + query + '" target="_blank"></iframe>';
+	}
+}
+
+function add_header(styles) {
+	var table = document.getElementById("the_table");
+	var html = '<tr><th>Table ID</th> <th> Context </th> <th>Question</th> <th>Answer Choices</th>';
+	for (var i = 0; i < styles.length; i++) {
+		html += '<th>' + styles[i] + '</th>';
+	}
+	html += '</tr>'
+	table.innerHTML = html;
+}
+
+function truncate_style_id(style_id) {
+	var basename = style_id.split('/').reverse()[0];
+	return basename.slice(0, -5);
+}
+
+function add_tasks(config, styles) {
+	var tasks = config['practice_tasks'];
+	for (var i = 0; i < tasks.length; i++) {
+		var task = tasks[i];
+		add_row(task, styles);
+	}
+	var task_sets = config['tasks'];
+	for (var i = 0; i < task_sets.length; i++) {
+		var task_set = task_sets[i];
+		for (var j = 0; j < task_set.length; j++) {
+			var task = task_set[j];
+			add_row(task, styles);
+		}
+	}
+}
+
+function process_config(config) {
+	var version = config['version'];
+	document.getElementById('version').innerHTML = "Task Version: " + version;
+
+	var styles = config['test_styles'];
+	for (var i = 0; i < styles.length; i++) {
+		styles[i] = truncate_style_id(styles[i]);
+	}
+	console.log(styles);
+	add_header(styles);
+	add_tasks(config, styles);
+
+}
+
+function start() {
+	var urlParams = new URLSearchParams(window.location.search);
+	var config_name = '';
+	if (urlParams.has('task')) {
+		config_name = urlParams.get('task');
+	} else {
+		config_name = 'task_v1'
+	}
+
+	var xhttp = new XMLHttpRequest();
+
+	xhttp.open("GET", "/data_for_viewing/" + config_name + ".json", false);  // synchronous
+	xhttp.responseType = 'application/json';
+	xhttp.send(null);
+
+	if (xhttp.status == 200) {
+		var config = JSON.parse(xhttp.responseText);
+		console.log(config);
+		process_config(config);
+	} else {
+		console.log("Error loading Data");
+		console.log(xhttp.status);
+		console.log(xhttp.responseText);
+	}
+}
+
+
+window.onload = start;
+
+</script>
+
+</head>
+<body>
+
+<h1>Task Viewer</h1>
+
+<p id="version"></p>
+
+<table id="the_table">
+</table>
+
+
+</body>
+</html>

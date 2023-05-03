@@ -1,0 +1,779 @@
+<!-- 
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2022 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+-->
+
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+	<link rel="stylesheet" href="table_style.css">
+	<style type="text/css"> 
+		input[type="radio"] {transform: scale(2); margin: 5vw }; 
+		body {overscroll-behavior:contain}
+	</style>
+<script>
+
+var landing_page_html = `
+	<div style="font-size:5.5vw">
+	<h1>Research Study</h1>
+
+	<p> Thank you for agreeing to participate in this study.
+		<u>You must use your mobile phone browser!</u>
+		If you're not on a phone, return the HIT please.
+	</p>
+	<h2> Instructions </h2>
+	There are 28 tasks.  Each task shows a table and asks a question about the table:
+
+	<ul>
+	<li>First, you see the question and the table context.</li>
+	<li>Then, you see the table.  Look for the answer.  There is a  <span id="time_limit"></span> second <b>time limit</b>.</li>
+	<li>When you find the answer (or time runs out), pick one of the 5 answer choices on the next screen.
+	<li>Finally, answer how hard the task was and how satisfying the table formatting was.</li>
+	</ul>
+	After the 28 tasks, we ask 3 follow up questions to get your overall feedback.
+
+	<h2> Scoring </h2>
+
+	<ul>
+	<li><span style="color:green"> Correct answers = +1 point.</span> </li>
+	<li><span style="color:red">Wrong answers =  -0.33 points.</span></li>  
+	<li><span style="color:orange">Skipping = 0 points.</span> To skip, select the "<span id="skip_text"></span>" answer.</li>
+	<li>Score in the top 25% = <b>$1 bonus</b>.</li>
+	<li>Perfect score = <b>$5 bonus</b>.</li>
+	</ul>
+
+	<h2> Tips </h2>
+
+	<ul>
+	<li> <b>Scroll</b> left-and-right or up-and-down to see the entire table.</li>
+	<li> Questions are repeated below the table. </li>
+	<li> <b>Don't randomly guess</b>.  Wrong answers are minus points; Skip instead. </li>
+	<li> Avoid making the "go back" swipe.  Leaving a task and coming back may cause you to <u>skip it</u>. </li>
+	</ul>
+
+	<input id="start_button" type="button" style="width:100%;font-size:7vw" name="start_button" onclick="start_button()" value="Start" disabled> <span id="response"></span> </div>
+`;
+
+var default_version = "v3";
+
+
+function store_readability_data(obj) {
+	const tasks = obj['tasks'];
+	localStorage.setItem('original_query', window.location.search);
+	var urlParams = new URLSearchParams(localStorage.getItem('original_query'));
+	localStorage.setItem('session_id', obj['session_id']);
+	localStorage.setItem('num_tasks', tasks.length);
+	localStorage.setItem('skip_text', obj['skip_text']);
+	localStorage.setItem('time_limit', obj['time_limit']);
+	localStorage.setItem('version', obj['version']);
+	localStorage.setItem('bonus_score', obj['bonus_score']);
+	var num_practice = 0;
+	var num_non_practice = 0;
+	for (var i = 0; i < tasks.length; i++) {
+		const task = tasks[i];
+		const prefix = String(i) + '_';
+		localStorage.setItem(prefix + "is_practice", task['is_practice']);
+		localStorage.setItem(prefix + "context", task['context']);
+		localStorage.setItem(prefix + "question", task['question']);
+		localStorage.setItem(prefix + "table_idx", task['table_idx']);
+		localStorage.setItem(prefix + "table_html_str", task['table_html']);
+		localStorage.setItem(prefix + "style_params_str", task['style']);
+		localStorage.setItem(prefix + "answer", task['answer']);
+		localStorage.setItem(prefix + "choice_a", task['answer_choices'][0]);
+		localStorage.setItem(prefix + "choice_b", task['answer_choices'][1]);
+		localStorage.setItem(prefix + "choice_c", task['answer_choices'][2]);
+		localStorage.setItem(prefix + "choice_d", task['answer_choices'][3]);
+		localStorage.setItem(prefix + 'time_limit', obj['time_limit']);
+
+		console.log(i);
+		const style_dict = JSON.parse(task['style']);
+		console.log(style_dict);
+		localStorage.setItem(prefix + "style_id", style_dict['style_id']);
+		localStorage.setItem(prefix + "task_id", task['task_id']);
+		if (task['is_practice']) {
+			num_practice++;
+		} else {
+			num_non_practice++;
+		}
+	}
+	localStorage.setItem('task_idx', -1); // start at -1 so next_task() increments it to 0 for the first task
+	localStorage.setItem('state', 'pretask');
+	localStorage.setItem('num_practice', num_practice.toString());
+	localStorage.setItem('num_non_practice', num_non_practice.toString());
+	localStorage.setItem('num_practice_correct', 0);
+	localStorage.setItem('total_score', '0');
+	localStorage.setItem('global_start_time', String(Date.now()));
+	localStorage.setItem('user_agent', navigator.userAgent);
+	localStorage.setItem('platform', navigator.platform);
+}
+
+function clear_body() {
+	document.body.innerHTML = '';
+	document.body.style.overscrollBehavior = 'contain';
+}
+
+// task specific global vars
+var scroll_log = null;
+var cell_coords = null;
+var time_taken = null;
+var answer = null;
+var difficult_answer = null;
+var format_answer = null;
+var start_time = null;
+var end_time = null;
+var timeout_triggered = null;
+var timer = null;
+
+function do_task() {
+	console.log("do_task()");
+	var session_id = localStorage.getItem('session_id');
+	var cur_state = localStorage.getItem('state');
+	var task_idx = localStorage.getItem('task_idx');
+	if (task_idx == '-1') {
+		next_task();
+	}
+
+	if (cur_state == 'pretask' || cur_state == 'screen1') {
+		do_screen1();
+	} else if (cur_state == 'screen2') {
+		do_screen2();
+	} else if (cur_state == 'screen3') {
+		do_screen3('interrupted');  // param will get recorded on server
+	} else if (cur_state == 'screen4') {
+		do_screen4();
+	}
+	else if (cur_state == 'final_questions') {
+		display_final_questions();
+	}
+	else if (cur_state == 'exit') {
+		display_exit_screen();
+	}
+	else {
+		// oops, somehow the previous task got interrupted and we are returning to the page
+		next_task();
+	}
+}
+function start_button() {
+	var start_button = document.getElementById('start_button');
+
+	history.pushState({}, '', location.toString().replace(location.search, ''))
+
+	if (start_button.disabled == false) {
+		start_button.disabled = true;
+		next_task();
+	}
+}
+function next_task() {
+	console.log("next_task()");
+	var task_idx = parseInt(localStorage.getItem('task_idx')) + 1;
+	var num_tasks = parseInt(localStorage.getItem('num_tasks'));
+	if (task_idx < num_tasks) {
+		localStorage.setItem('task_idx', task_idx);
+		localStorage.setItem('state', 'pretask');
+		// reload page to go on to next task and change query to force new browser tab history
+		
+		if(location.search) {
+			location = location.toString().replace(location.search, "?task_idx=" + String(task_idx))
+		} else {
+			location = location.toString() + "?task_idx=" + String(task_idx);
+		}
+	} else {
+		display_final_questions();
+	}
+}
+
+function record_to_server(obj, fname) {
+	obj['filename'] = fname;
+	var xhttp = new XMLHttpRequest();
+
+	xhttp.open("POST", "/readability_log", false);
+	xhttp.setRequestHeader("Content-type", "application/json");
+	var json_str = JSON.stringify(obj);
+	xhttp.send(json_str);
+}
+
+function get_metadata_obj() {
+    const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+
+	const table_idx = localStorage.getItem(prefix + "table_idx");
+	const task_id = localStorage.getItem(prefix + "task_id");
+	const style_id = localStorage.getItem(prefix + "style_id");
+	var obj = {'session_id': localStorage.getItem('session_id'),
+	           'state': localStorage.getItem('state'),
+			   'original_query': localStorage.getItem('original_query'),
+			   'user_agent': localStorage.getItem('user_agent'),
+			   'platform': localStorage.getItem('platform'),
+			   'task_idx': task_idx,
+			   'task_id': task_id,
+			   'style_id': style_id,
+			   'table_idx': table_idx};
+	return obj;
+}
+
+function record_end_screen1() {}
+
+function record_end_screen2() {
+	console.log("report_end_screen2()");
+
+	var time_obj = get_metadata_obj();
+	var scroll_obj = get_metadata_obj();
+	var cell_obj = get_metadata_obj();
+
+	time_obj['time_taken'] = time_taken;
+	time_obj['timeout_triggered'] = timeout_triggered;
+
+	scroll_obj['scroll_log'] = scroll_log;
+	cell_obj['cell_coords'] = cell_coords;
+
+    const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+
+	record_to_server(time_obj, prefix + "time");
+	record_to_server(scroll_obj, prefix + "scroll");
+	record_to_server(cell_obj, prefix + "cell");
+}
+
+function record_end_screen3(cur_score) {
+	console.log("report_end_screen3()");
+
+	var obj = get_metadata_obj();
+
+	obj['answer'] = answer;
+	obj['cur_score'] = cur_score;
+	obj['cum_score'] = parseFloat(localStorage.getItem('total_score'));
+
+    const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+
+	record_to_server(obj, prefix + "answer");
+}
+
+function record_end_screen4() {
+	console.log("report_end_screen4()");
+
+	var obj = get_metadata_obj();
+
+	obj['difficult_answer'] = difficult_answer;
+	obj['format_answer'] = format_answer;
+
+    const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+
+	record_to_server(obj, prefix + "meta_answers");
+}
+
+function do_screen1() {
+	console.log("do_screen1()");
+	clear_body();
+	localStorage.setItem('state', 'screen1');
+	const task_idx = localStorage.getItem('task_idx');
+	const num_tasks = localStorage.getItem('num_tasks');
+	const prefix = task_idx + '_';
+	const context = localStorage.getItem(prefix + "context");
+	const question = localStorage.getItem(prefix + "question");
+	const display_table_num = parseInt(task_idx) + 1;
+	const time_limit = localStorage.getItem('time_limit')
+	document.body.style.padding = 8;
+	document.body.innerHTML = '<div style="font-size:6vw"><h2>Task: ' + display_table_num.toString() + ' / ' + num_tasks + '</h2>' +
+	              '<p> <b>Context: </b>' + context + '</p></br>' +
+	              '<p style="font-size:6.5vw"> <b>Question: </b>' + question + '</p></br>' +
+				  '<p> Click the button below to show the table. ' + 
+				       'Tap "Give Answer" below the table <b>as soon as you have the answer.</b> ' +
+					   'If you cannot find the answer within ' + time_limit + ' seconds, please answer skip instead of guessing' +
+				  '<p>Good Luck! :)</p>' + 
+				  '<input id="next" type="button" style="width:100%;font-size:7vw" name="next" onclick="end_screen1()" value="Show Table"></div></br></br>';
+	// next screen is triggered by tapping the button
+}
+
+function end_screen1() {
+	record_end_screen1();
+	do_screen2();
+}
+
+
+function stop_record_scroll() {
+	window.onscroll = function() {};
+	localStorage.setItem("recording_scroll", false);
+}
+
+function start_record_scroll() {
+	if (localStorage.getItem("recording_scroll") === true) {
+		return;
+	}
+	scroll_log = [];
+	window.onscroll = function() {
+		var record = {
+					  "offsetLeft": window.visualViewport.offsetLeft,
+					  "offsetTop": window.visualViewport.offsetTop,
+					  "pageLeft": window.visualViewport.pageLeft,
+					  "pageTop": window.visualViewport.pageTop,
+					  "width": window.visualViewport.width,
+					  "height": window.visualViewport.height,
+					  "scale": window.visualViewport.scale,
+					  "time": Date.now() - start_time
+		};
+		scroll_log.push(record);
+	};
+	localStorage.setItem("recording_scroll", true);
+}
+
+function do_screen2() {
+	console.log("do_screen2()");
+	clear_body();
+	localStorage.setItem('state', 'screen2');
+	const task_idx = localStorage.getItem('task_idx');
+	const num_tasks = localStorage.getItem('num_tasks');
+	const prefix = task_idx + '_';
+	const question = localStorage.getItem(prefix + "question");
+	const original_time_limit = parseInt(localStorage.getItem("time_limit"));
+	const table_html = localStorage.getItem(prefix + "table_html_str");
+	const table_idx = localStorage.getItem(prefix + "table_idx");
+	const style_dict = JSON.parse(localStorage.getItem(prefix + "style_params_str"));
+	const task_id = localStorage.getItem(prefix + "task_id");
+	const style_id = localStorage.getItem(prefix + "style_id");
+	console.log(task_idx, task_id, style_id, table_idx);
+	document.body.innerHTML = table_html +
+	              '<div style="font-size:5.5vw;position:sticky;left:0px;"><p>' + question + '</p>' + 
+				  '<p>Count Down <span id="count_down" style="color:red"></span></p>' +
+				  '<input id="next" type="button" style="width:100%;font-size:7vw" ' + 
+				  'name="next" onclick="end_screen2(false)" value="Give Answer" disabled></div></br></br>';
+
+
+	const count_down_ele = document.getElementById("count_down")
+
+	set_css_to_collection(get_ths_tds(), 'padding', 0);  // override default padding
+	update_style(style_dict);
+	cell_coords = get_cell_rects();
+
+	var first = true;
+	// get the start time and make it robust to page reload
+	start_time = localStorage.getItem('start_time');
+	if (start_time === null) {
+		start_time = Date.now();
+		localStorage.setItem('start_time', String(start_time));
+		setTimeout(function() { document.getElementById("next").disabled = false; }, 3000);
+	} else {
+		start_time = parseInt(start_time);
+		document.getElementById("next").disabled = false;
+	}
+
+	start_record_scroll();
+
+	var cur_count = parseInt(localStorage.getItem(prefix + "time_limit"));
+	if (original_time_limit) {
+		// initialize the displayed time
+		count_down_ele.innerHTML = ':' + String(cur_count);
+		// set up the count down
+		timer = setInterval(function() {
+			cur_count -= 1;
+			localStorage.setItem(prefix + 'time_limit', String(cur_count));
+			count_down_ele.innerHTML = ':' + String(cur_count);
+			if (cur_count <= 0 && first) {
+				// time up
+				document.getElementById("next").disabled = true;
+				first = false;  // make sure this only triggers once
+				count_down_ele.innerHTML = 'Time Up!';
+				setTimeout(function() { console.log("timed out"); end_screen2(true);}, 2000);
+				clearInterval(timer);  // cancel count down
+			} 
+		}, 1000);
+	} else {
+		// no time limit for this task
+		count_down_ele.innerHTML = 'No Time Limit';
+	}
+	// next screen is triggered by tapping the button or time runs out
+}
+
+function getCoords(elem) {
+  var box = elem.getBoundingClientRect();
+  return {
+    "top": box.top + window.pageYOffset,
+    "left": box.left + window.pageXOffset,
+    "bottom": box.bottom + window.pageYOffset,
+    "right": box.right + window.pageXOffset
+  };
+}
+
+function get_cell_rects() {
+	var table = document.getElementsByTagName('table')[0];
+	var rects = [];
+	for (var i = 0; i < table.rows.length; i++) {
+		var row = table.rows[i];
+		for (var k = 0; k < row.cells.length; k++) {
+			var cell = row.cells[k];
+			var coords = getCoords(cell);
+			coords['ridx'] = i;
+			coords['cidx'] = k;
+			rects.push(coords);
+		}
+	}
+	return rects;
+}
+
+function get_selected_val(ids) {
+	var val = null;
+	for (var idx in ids) {
+		var _id = ids[idx];
+		var ele = document.getElementById(_id);
+		if (ele.checked) {
+			val = ele.value;
+		}
+	}
+	return val;
+}
+
+function end_screen3() {
+	console.log("end_screen3()");
+	const choices = ['choice_a', 'choice_b', 'choice_c', 'choice_d', 'skip'];
+	answer = get_selected_val(choices);
+
+	const task_idx = localStorage.getItem('task_idx');
+	const skip_text = localStorage.getItem("skip_text");
+	const prefix = task_idx + '_';
+	var score = 0.0;
+	if (answer != skip_text) {
+		const correct_answer = localStorage.getItem(prefix + 'answer');
+		console.log(correct_answer, answer);
+		if (answer == correct_answer) {
+			score = 1.0;
+		} else {
+			score = -1.0 / 3;
+		}
+	}
+	localStorage.setItem(prefix + "score", score); 
+
+	const is_practice = localStorage.getItem(prefix + "is_practice");
+	if (is_practice == 'true') {
+		var num_practice_correct = parseInt(localStorage.getItem('num_practice_correct'));
+		num_practice_correct++;
+		localStorage.setItem('num_practice_correct', num_practice_correct.toString());
+	} else {
+		var total_score = parseFloat(localStorage.getItem('total_score'));
+		total_score += score;
+		localStorage.setItem('total_score', total_score.toString());
+		console.log("total_score:", total_score);
+	}
+	record_end_screen3(score);
+	do_screen4();
+}
+
+function enable_submit() {
+	document.getElementById('submit').disabled = false;
+}
+
+function end_screen2(hit_timeout) {
+	clearInterval(timer);  // cancel count down
+	stop_record_scroll();
+
+	if (hit_timeout === true) {
+		timeout_triggered = "triggered";
+	} else if (hit_timeout === false) {
+		timeout_triggered = "not triggered";
+	} else {
+		timeout_triggered = hit_timeout;
+	}
+
+	if (timer) {
+		clearInterval(timer);  // cancel count down
+	}
+
+	end_time = Date.now();
+	time_taken = end_time - start_time;
+	localStorage.removeItem('start_time');
+	record_end_screen2();
+	do_screen3(hit_timeout);
+}
+
+function do_screen3(hit_timeout) {
+	console.log("do_screen3()");
+	clear_body();
+	localStorage.setItem('state', 'screen3');
+	const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+	const question = localStorage.getItem(prefix + "question");
+	const choice_a = localStorage.getItem(prefix + "choice_a");
+	const choice_b = localStorage.getItem(prefix + "choice_b");
+	const choice_c = localStorage.getItem(prefix + "choice_c");
+	const choice_d = localStorage.getItem(prefix + "choice_d");
+	const skip_text = localStorage.getItem("skip_text");
+	document.body.style.padding = 8;
+	common = '<input type="radio" onchange="enable_submit()" name="answers" ';
+	document.body.innerHTML = '<div style="font-size:6vw">' + 
+	              '<p> <b>Question: </b>' + question + '</p>' +
+
+				  '<div style="line-height:200%">' + 
+				  '<label for="choice_a">' + common + 'id="choice_a" value="' + choice_a + '"/>' + choice_a + '</label></br>' +
+				  '<label for="choice_b">' + common + 'id="choice_b" value="' + choice_b + '"/>' + choice_b + '</label></br>' +
+				  '<label for="choice_c">' + common + 'id="choice_c" value="' + choice_c + '"/>' + choice_c + '</label></br>' +
+				  '<label for="choice_d">' + common + 'id="choice_d" value="' + choice_d + '"/>' + choice_d + '</label></br>' +
+				  '<label for="skip">' + common + 'id="skip" value="' + skip_text + '"/>' + skip_text + '</label></br></div>' +
+
+				  '<input id="submit" type="button" style="width:100%;font-size:7vw" name="submit" onclick="end_screen3()" value="Submit" disabled></br></br>';
+}
+
+function has_checked(ids) {
+	for (idx in ids) {
+		var _id = ids[idx];
+		if (document.getElementById(_id).checked) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function conditional_enable_submit() {
+	const ids1 = ['very_easy', 'easy', 'neither', 'difficult', 'very_difficult'];
+	const ids2 = ['very_satisfied', 'satisfied', 'neutral', 'dissatisfied', 'very_dissatisfied'];
+	if (has_checked(ids1) && has_checked(ids2)) {
+		document.getElementById('submit').disabled = false; 
+	}
+}
+
+
+function do_screen4() {
+	console.log("do_screen4()");
+	clear_body();
+
+	localStorage.setItem('state', 'screen4');
+
+	common1 = '<input type="radio" onchange="conditional_enable_submit()" name="difficult" ';
+	common2 = '<input type="radio" onchange="conditional_enable_submit()" name="format" ';
+	document.body.innerHTML = '<div style="font-size:6vw">' + 
+	              '<p> How <u>difficult</u> was this task?</p>' +
+
+				  '<div style="line-height:200%">' + 
+				  '<label for="very_easy">' + common1 + 'id="very_easy" value="very_easy"/>Very Easy</label></br>' +
+				  '<label for="easy">' + common1 + 'id="easy" value="easy"/>Easy</label></br>' +
+				  '<label for="neither">' + common1 + 'id="neither" value="neither"/>Neither Easy nor Difficult</label></br>' +
+				  '<label for="difficult">' + common1 + 'id="difficult" value="difficult"/>Difficult</label></br>' +
+				  '<label for="very_difficult">' + common1 + 'id="very_difficult" value="very_difficult"/>Very Difficult</label></br></div></br>' +
+
+	              '<p> How satisfied were you with the table <u>formatting</u> (font sizes, colors, spacing, etc.)?</p>' +
+
+				  '<div style="line-height:200%">' + 
+				  '<label for="very_satisfied">' + common2 + 'id="very_satisfied" value="very_satisfied"/>Very Satisfied</label></br>' +
+				  '<label for="satisfied">' + common2 + 'id="satisfied" value="satisfied"/>Satisfied</label></br>' +
+				  '<label for="neutral">' + common2 + 'id="neutral" value="neutral"/>Neither Satisfied nor Dissatisfied</label></br>' +
+				  '<label for="dissatisfied">' + common2 + 'id="dissatisfied" value="dissatisfied"/>Dissatisfied</label></br>' +
+				  '<label for="very_dissatisfied">' + common2 + 'id="very_dissatisfied" value="very_dissatisfied"/>Very Dissatisfied</label></br></div>' +
+
+				  '<input id="submit" type="button" style="width:100%;font-size:7vw" name="submit" onclick="end_screen4()" value="Submit" disabled></br></br>';
+}
+
+function end_screen4() {
+	console.log("end_screen4()");
+	const ids1 = ['very_easy', 'easy', 'neither', 'difficult', 'very_difficult'];
+	difficult_answer = get_selected_val(ids1);
+
+	const ids2 = ['very_satisfied', 'satisfied', 'neutral', 'dissatisfied', 'very_dissatisfied'];
+	format_answer = get_selected_val(ids2);
+
+	record_end_screen4();
+
+    const task_idx = localStorage.getItem('task_idx');
+	const prefix = task_idx + '_';
+	var score = 0;
+	if (localStorage.getItem(prefix + 'score') !== null) {
+		score = localStorage.getItem(prefix + 'score')
+	}
+
+	var feedback;
+	if (score > 0) {
+		feedback = '<p style="color:green;font-size:7vw">Your answer was Correct, good job! (+1 points)</p>';
+	} else if (score < 0) {
+		feedback = '<p style="color:red;font-size:7vw">Your answer was Wrong, better luck next time (-0.33 points)</p>';
+	} else {
+		feedback = '<p style="font-size:7vw">You Skipped the Question (0 points)</p>';
+	}
+	feedback += '<p style=font-size:6vw>Loading Next Task...</p>';
+	document.body.innerHTML = feedback
+
+	setTimeout(next_task, 1500);
+}
+
+function conditional_enable_submit_final() {
+	const ids = ['difficulty', 'format', 'comments'];
+	var disabled = false;
+	for (var idx in ids) {
+		var _id = ids[idx];
+		var ele = document.getElementById(_id);
+		if (!ele.value) {
+			disabled = true;
+			break;
+		}
+	}
+	document.getElementById('submit').disabled = disabled;
+}
+
+function end_final() {
+	console.log("final_submit()");
+	const ids = ['difficulty', 'format', 'comments'];
+	obj = get_metadata_obj();
+	var obj = {'session_id': localStorage.getItem('session_id'), 
+	           'state': localStorage.getItem('state'),
+			   'original_query': localStorage.getItem('original_query'),
+			   };
+	var global_start_time = parseInt(localStorage.getItem('global_start_time'));
+	var end_time = Date.now();
+	var elapsed = end_time - global_start_time;
+	obj['start_time'] = global_start_time;
+	obj['end_time'] = end_time;
+	obj['total_time'] = elapsed;
+
+	for (var idx in ids) {
+		var _id = ids[idx];
+		var ele = document.getElementById(_id);
+		obj[_id] = ele.value;
+	}
+	record_to_server(obj, 'final_questions');
+	display_exit_screen();
+}
+
+
+function display_final_questions() {
+	clear_body();
+	localStorage.setItem('state', 'final_questions');
+
+	var html = '<div style="font-size:6vw"><p><b> Final Questions </b></p>' +
+	   '<p style="font-size:5vw"> What made a task easy or difficult?</p>' + 
+	   '<textarea id="difficulty" style="font-size:5vw;width:100%" rows="3" oninput="conditional_enable_submit_final()"></textarea></br></br>' +
+	   '<p style="font-size:5vw"> What made you satisfied/unsatisfied with a table format?</p>' + 
+	   '<textarea id="format" style="font-size:5vw;width:100%" rows="3" oninput="conditional_enable_submit_final()"></textarea></br></br>' +
+	   '<p style="font-size:5vw"> Any other comments about the tasks?  Any issues?</p>' + 
+	   '<textarea id="comments" style="font-size:5vw;width:100%" rows="3" oninput="conditional_enable_submit_final()"></textarea></br></br>' +
+	   '<input id="submit" type="button" style="width:100%;font-size:7vw" name="submit" onclick="end_final()" value="Submit" disabled></br></br>';
+
+	document.body.style = 'padding:12px;text-align:center;overscroll-behavior:contain';
+	document.body.innerHTML = html;
+
+}
+
+function display_exit_screen() {
+	clear_body();
+	localStorage.setItem('state', 'exit');
+	var total_score = parseFloat(localStorage.getItem('total_score')).toFixed(2);
+	var session_id = localStorage.getItem('session_id');
+	var num_practice = localStorage.getItem('num_practice');
+	var num_practice_correct = localStorage.getItem('num_practice_correct');
+	var num_non_practice = localStorage.getItem('num_non_practice');
+	var html = '<div style="font-size:6vw"><p><b> All Done! </b></p>' +
+	   '<p> You scored ' + total_score + ' out of ' + num_non_practice +  ' possible points.</p>';
+	total_score = parseFloat(total_score);
+	num_non_practice = parseInt(num_non_practice);
+	if (total_score == num_non_practice) {
+		html += '<p> Congratulations on the perfect score!  You qualify for a $5 bonus!';
+	} else {
+		html += '<p> If you scored in the top 25% of participants, you will receive a $1 bonus</p>';
+	}
+
+	html += '<p> Out of ' + num_practice + ' non-scoring practice questions, you got ' + num_practice_correct + ' correct.</p></div>';
+	html += '<p style="font-size:7vw"><b>Session ID Code: ' + session_id + '</b></p>';
+	html += '<p style="font-size:6vw">Please return to Mturk and copy the code to record task completion.</p>';
+
+	document.body.style = 'padding:12px;text-align:center';
+	document.body.innerHTML = html;
+	//localStorage.clear();
+}
+
+function init_readability() {
+	console.log("init_readability()");
+	// ajax request to load data
+	document.body.style = 'padding:8px';
+	document.body.innerHTML = landing_page_html; 
+
+	const start_button = document.getElementById('start_button');
+	const response_ele = document.getElementById("response")
+
+	var urlParams = new URLSearchParams(window.location.search);
+	var version;
+	if (urlParams.has('version')) {
+		version = urlParams.get('version');
+	} else {
+		version = default_version;
+	}
+
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4) {
+			if (this.status == 200) {
+				var obj = JSON.parse(xhttp.responseText);
+			   	console.log(obj);
+				document.getElementById('skip_text').innerHTML = obj['skip_text'];
+				document.getElementById('time_limit').innerHTML = obj['time_limit'];
+				store_readability_data(obj);
+				start_button.disabled = false;  // button press triggers next_task()
+			} else {
+				response_ele.innerHTML = '<span style="color:red">Failed to Load Data (' + this.status + ') Something is wrong.  Please notify us of this. </span>';
+			}
+	   }
+	};
+	xhttp.open("POST", "/readability_start", false);
+	xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhttp.send("version=" + version); 
+}
+
+function go() {
+	console.log("go()");
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) ||
+	   (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.platform))) {
+		var urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.get('reset')) {
+			localStorage.clear();
+		}
+						
+		if (localStorage.session_id) {
+			do_task();
+		} else {
+			// first time visiting
+			clear_body();
+			init_readability();
+		}
+	} else {
+		// visiting on desktop
+		var html = '<div style="font-size:5vw"><p><b> You Must Use a Mobile Device for this Study! </b></p>' +
+				   '<p> Please scan the QR code below to open this study on your phone. </p>' +
+				   '<span id="qr_code"></span>';
+		document.body.style = 'padding:8px';
+		document.body.innerHTML = html; 
+		new QRCode(document.getElementById("qr_code"), window.location.href);
+	}
+}
+
+window.addEventListener( "pageshow", function ( event ) {
+  var historyTraversal = event.persisted ||
+                         ( typeof window.performance != "undefined" &&
+                              window.performance.navigation.type === 2 );
+  if ( historyTraversal ) {
+    // Handle page restore.
+    window.location.reload();
+  }
+});
+
+window.onload = go;
+
+</script>
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+<script src="table_style.js"></script>
+</head>
+<body>
+
+</body>
+</html>
